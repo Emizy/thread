@@ -14,3 +14,4 @@ drfdocs==0.0.11
 django-filter
 Pillow==9.2.0
 python-magic==0.4.27
+django-silk=5.0.3
