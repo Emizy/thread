@@ -21,7 +21,9 @@ class PostSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_image(obj):
-        return f'{settings.BASE_URL}{obj.image.url}'
+        if obj.image:
+            return f'{settings.BASE_URL}{obj.image.url}'
+        return ''
 
 
 class CommentSerializer(serializers.ModelSerializer):

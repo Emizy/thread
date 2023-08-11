@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils.text import slugify
 
 
 class User(AbstractUser):
@@ -15,7 +16,7 @@ class User(AbstractUser):
 class Post(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="%(class)s")
     title = models.CharField(max_length=255)
-    slug = models.SlugField(max_length=255)
+    slug = models.SlugField(max_length=255, null=True, blank=True)
     image = models.ImageField(upload_to='blog')
     description = models.TextField(default='')
     publish = models.BooleanField(default=False)
@@ -27,6 +28,11 @@ class Post(models.Model):
 
     class Meta:
         verbose_name_plural = 'Posts'
+
+    def save(self, *args, **kwargs):
+        if self.title:
+            self.slug = slugify(self.title)
+        return super().save(*args, **kwargs)
 
     @property
     def total_comments(self):
