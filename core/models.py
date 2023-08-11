@@ -28,6 +28,10 @@ class Post(models.Model):
     class Meta:
         verbose_name_plural = 'Posts'
 
+    @property
+    def total_comments(self):
+        return self.comments.all().count()
+
 
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments", null=True, blank=True)
@@ -43,3 +47,7 @@ class Comment(models.Model):
 
     class Meta:
         verbose_name_plural = 'Comments'
+
+    @property
+    def total_replies(self):
+        return Comment.objects.filter(parent=self).count()
