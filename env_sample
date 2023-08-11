@@ -1,0 +1,9 @@
+DB_NAME=
+DB_USER=
+DB_PASSWORD=
+DEBUG=1
+DEFAULT_URL_SCHEME=
+DB_ENGINE='django.db.backends.postgresql_psycopg2'
+ALLOWED_HOSTS=http://localhost:3000;
+SECRET_KEY=
+REDIS_CACHE_LOCATION=
