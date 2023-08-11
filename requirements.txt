@@ -1,0 +1,16 @@
+Django~=3.2.19
+psycopg2-binary==2.9.2
+python-decouple==3.8
+traceback-with-variables==2.0.4
+djangorestframework==3.12.2
+djangorestframework-jwt==1.0.1
+djangorestframework-simplejwt==4.6.0
+PyJWT==2.0.1
+drf-spectacular==0.22.1
+django-cors-headers==4.1.0
+django-redis==5.3.0
+drf-yasg==1.20.0
+drfdocs==0.0.11
+django-filter
+Pillow==9.2.0
+python-magic==0.4.27

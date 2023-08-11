@@ -1,0 +1,8 @@
+.idea/*
+media/*
+*__pycache__*
+*.log
+**/migrations/**
+!**/migrations
+!**/migrations/__init__.py
+.env
