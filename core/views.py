@@ -124,7 +124,7 @@ class PostViewSet(BaseViewSet):
     logger_name = 'core'
 
     def get_object(self):
-        return get_object_or_404(Post, id=self.kwargs.get('pk'))
+        return get_object_or_404(self.queryset, id=self.kwargs.get('pk'))
 
     def get_queryset(self):
         return self.queryset
@@ -269,7 +269,7 @@ class PostCommentViewSet(BaseViewSet):
         return self.queryset
 
     def get_object(self):
-        return get_object_or_404(Comment, id=self.kwargs.get('pk'))
+        return get_object_or_404(self.queryset, id=self.kwargs.get('pk'))
 
     @swagger_auto_schema(
         operation_description="Display all available post comment",
@@ -293,7 +293,7 @@ class PostCommentViewSet(BaseViewSet):
         except Exception as ex:
             context.update({'status': status.HTTP_400_BAD_REQUEST, 'message': str(ex)})
             self.logger().error(
-                f'<{self.request.user}> Something went wrong while fetching post comment due to {format_exc(ex)}')
+                f'Something went wrong while fetching post comment due to {format_exc(ex)}')
         return Response(context, status=context['status'])
 
     @swagger_auto_schema(
@@ -333,5 +333,5 @@ class PostCommentViewSet(BaseViewSet):
             context.update({
                 'status': status.HTTP_400_BAD_REQUEST,
                 'message': 'Something went wrong while adding comment,Kindly try again'})
-            self.logger().error(f'<{self.request.user}> error fetching comment relies due to {format_exc(ex)}')
+            self.logger().error(f'error fetching comment relies due to {format_exc(ex)}')
         return Response(context, status=context['status'])
