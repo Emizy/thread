@@ -9,7 +9,7 @@ fake = Faker()
 
 @pytest.mark.django_db
 def test_user_model_with_serializer(setup_user_data):
-    instance = setup_user_data
+    instance, _ = setup_user_data
     serializer = UserSerializer(instance).data
     assert [instance.id, instance.first_name, instance.last_name] == [serializer.get('id'),
                                                                       serializer.get('first_name'),
@@ -19,8 +19,9 @@ def test_user_model_with_serializer(setup_user_data):
 class TestPostComment:
     @pytest.mark.django_db
     def test_post_model(self, setup_user_data):
+        user, _ = setup_user_data
         data = {
-            'user': setup_user_data,
+            'user': user,
             'title': fake.name(),
             'publish': True,
             'description': ' '.join(fake.sentences())
@@ -31,8 +32,9 @@ class TestPostComment:
 
     @pytest.mark.django_db
     def test_post_serializer(self, setup_user_data):
+        user, _ = setup_user_data
         data = {
-            'user': setup_user_data,
+            'user': user,
             'title': fake.name(),
             'publish': True,
             'description': ' '.join(fake.sentences())
@@ -43,11 +45,12 @@ class TestPostComment:
 
     @pytest.mark.django_db
     def test_post_comment_comment(self, setup_post_data, setup_user_data):
-        post = setup_post_data
+        post, _ = setup_post_data
+        user, _ = setup_user_data
         for _ in range(5):
             comment = {
                 'post': post,
-                'user': setup_user_data,
+                'user': user,
                 'body': ' '.join(fake.sentences())
             }
             _ = Comment.objects.create(**comment)
@@ -56,14 +59,15 @@ class TestPostComment:
 
     @pytest.mark.django_db
     def test_post_comment_serializer(self, setup_post_data, setup_user_data):
-        post = setup_post_data
+        post, _ = setup_post_data
+        user, _ = setup_user_data
         for _ in range(5):
             comment = {
                 'post': post,
-                'user': setup_user_data,
+                'user': user,
                 'body': ' '.join(fake.sentences())
             }
             _ = Comment.objects.create(**comment)
         comments = Comment.objects.filter(post=post)
-        serializer = CommentSerializer(comments, many=True).data
+        _ = CommentSerializer(comments, many=True).data
         assert comments.count() == 5

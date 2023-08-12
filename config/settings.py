@@ -8,7 +8,7 @@ from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
+print(BASE_DIR)
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY')
 BASE_URL = config('BASE_URL')
@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_yasg',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -81,6 +82,9 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/3.2/ref/settings/#auth-password-validators
 AUTH_USER_MODEL = "core.User"
+AUTHENTICATION_BACKENDS = (
+    'services.authentication.CustomAuthBackend',
+)
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -189,10 +193,9 @@ SESSION_COOKIE_HTTPONLY = True
 # REST FRAMEWORK
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.TokenAuthentication",
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
-        "rest_framework.authentication.BasicAuthentication",
         "rest_framework.authentication.SessionAuthentication",
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
@@ -233,4 +236,16 @@ CACHES = {
         },
         "KEY_PREFIX": "blog"
     }
+}
+# SWAGGER CONFIGURATION
+LOGIN_URL = 'rest_framework:login'
+LOGOUT_URL = 'rest_framework:logout'
+SWAGGER_SETTINGS = {
+    "SECURITY_DEFINITIONS": {
+        'basic': {
+            'type': 'basic'
+        }
+    },
+    "USE_SESSION_AUTH": True,
+    "TAGS_SORTER": "alpha",
 }

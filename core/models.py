@@ -42,12 +42,13 @@ class Post(models.Model):
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments", null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.SET_NULL, related_name="%(class)s", null=True, blank=True)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, related_name="%(class)s", null=True, blank=True)
+    parent_comment = models.ForeignKey('self', on_delete=models.CASCADE, related_name="%(class)s", null=True,
+                                       blank=True)
     body = models.TextField(default='')
     timestamp = models.DateTimeField(auto_now=True, editable=False)
 
     def __str__(self):
-        parent_id = self.parent.id if self.parent is not None else ''
+        parent_id = self.parent_comment.id if self.parent_comment is not None else ''
         name = self.post.title if self.post is not None else f'<Comment Reply> #{parent_id}'
         return f"{name}"
 
@@ -56,4 +57,4 @@ class Comment(models.Model):
 
     @property
     def total_replies(self):
-        return Comment.objects.filter(parent=self).count()
+        return Comment.objects.filter(parent_comment=self).count()
