@@ -330,7 +330,8 @@ class PostCommentViewSet(BaseViewSet):
             queryset = self.queryset.filter(parent_comment=instance)
             context.update({'data': self.serializer_class(queryset, many=True).data})
         except Exception as ex:
-            context.update({'status': status.HTTP_400_BAD_REQUEST,
-                            'message': 'Something went wrong while adding comment,Kindly try again'})
+            context.update({
+                'status': status.HTTP_400_BAD_REQUEST,
+                'message': 'Something went wrong while adding comment,Kindly try again'})
             self.logger().error(f'<{self.request.user}> error fetching comment relies due to {format_exc(ex)}')
         return Response(context, status=context['status'])

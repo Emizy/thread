@@ -110,9 +110,6 @@ class CommentFormSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         if bool(attrs.get('post_id')) is False and bool(attrs.get('parent_comment_id')) is False:
-            raise serializers.ValidationError(
-                'post_id or parent_comment_id is required to add a comment')
-        if bool(attrs.get('post_id')) is False and bool(attrs.get('parent_comment_id')) is False:
             raise serializers.ValidationError('Kindly supply either post_id or parent_comment_id to add a comment')
 
         if bool(attrs.get('post_id')):

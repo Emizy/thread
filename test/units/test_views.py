@@ -1,9 +1,9 @@
 import os
-
+import random
 import pytest
 from django.conf import settings
 from faker import Faker
-from core.models import Post
+from core.models import Post, Comment, User
 from test.endpoints import EndPoint
 
 fake = Faker()
@@ -123,14 +123,70 @@ class TestPost:
 
 @pytest.mark.django_db
 class TestPostComment:
-    def test_list_comment(self, client):
-        pass
+    @staticmethod
+    def prepare_dummy_comment_data(no_of_data: int, user, post):
+        for i in range(no_of_data):
+            comment = {
+                'post': post,
+                'user': user,
+                'body': ' '.join(fake.sentences())
+            }
+            _ = Comment.objects.create(**comment)
 
-    def test_list_comment_without_post_id_query(self, client):
-        pass
+    def test_list_comment(self, client, setup_post_data):
+        # prepare
+        post, user_info = setup_post_data
+        user = User.objects.get(email=user_info.get('email'))
+        self.prepare_dummy_comment_data(no_of_data=10, user=user, post=post)
+        # act
+        response = client.get(f'{EndPoint.COMMENT}/?post__id={post.id}&limit=10', format='json')
+        results = response.data['data']['results']
+        # assert
+        assert response.status_code == 200
+        assert len(results) == 10
 
-    def test_list_comment_replies(self, client):
-        pass
+    def test_list_comment_without_post_id_query(self, client, setup_post_data):
+        post, user_info = setup_post_data
+        user = User.objects.get(email=user_info.get('email'))
+        self.prepare_dummy_comment_data(no_of_data=10, user=user, post=post)
+        response = client.get(f'{EndPoint.COMMENT}/?limit=10', format='json')
+        results = response.data['data']['results']
+        assert len(results) == 0
 
-    def test_create_comment_reply(self, auth_client):
-        pass
+    def test_list_comment_replies(self, client, setup_post_data, setup_user_data):
+        post, user_info = setup_post_data
+        user_instance, _ = setup_user_data
+        user = User.objects.get(email=user_info.get('email'))
+        self.prepare_dummy_comment_data(no_of_data=1, user=user, post=post)
+        comment = Comment.objects.all().first()
+        users = [user, user_instance]
+        for _ in range(10):
+            random.shuffle(users)
+            data = {
+                'parent_comment_id': comment.id,
+                'body': fake.sentence(),
+                'user': users[0]
+            }
+            _ = Comment.objects.create(**data)
+        response = client.get(f'{EndPoint.COMMENT}/{comment.id}/replies/')
+        data = response.data['data']
+        assert len(data) == 10
+
+    def test_create_comment_reply(self, auth_client, setup_post_data):
+        post, user_info = setup_post_data
+        user = User.objects.get(email=user_info.get('email'))
+        self.prepare_dummy_comment_data(no_of_data=1, user=user, post=post)
+        comment = Comment.objects.all().first()
+        data = {
+            'parent_comment_id': comment.id,
+            'body': fake.sentence(),
+        }
+        response = auth_client.post(f'{EndPoint.COMMENT}/', data, 'json')
+        assert response.status_code == 201
+
+    def test_create_comment_without_post_id(self, auth_client):
+        data = {
+            'body': fake.sentence(),
+        }
+        response = auth_client.post(f'{EndPoint.COMMENT}/', data, 'json')
+        assert response.status_code == 400
