@@ -258,7 +258,7 @@ class PostViewSet(BaseViewSet):
 
 
 class PostCommentViewSet(BaseViewSet):
-    queryset = Comment.objects.select_related('user', 'post', 'parent_comment').all().order_by('-timestamp')
+    queryset = Comment.objects.select_related('user', 'post', 'parent_comment').all().order_by('timestamp')
     serializer_class = CommentSerializer
     serializer_form_class = CommentFormSerializer
     filterset_fields = ['post__id']
