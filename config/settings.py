@@ -249,3 +249,5 @@ SWAGGER_SETTINGS = {
     "USE_SESSION_AUTH": True,
     "TAGS_SORTER": "alpha",
 }
+
+SILKY_PYTHON_PROFILER = True

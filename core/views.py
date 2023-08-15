@@ -4,7 +4,10 @@ import pytz
 import logging
 from django.shortcuts import redirect, get_object_or_404
 from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
+from django.views.decorators.vary import vary_on_cookie
 from drf_yasg import openapi
+from silk.profiling.profiler import silk_profile
 from traceback_with_variables import format_exc
 from django.contrib.auth import authenticate, logout
 from django.utils.timezone import make_aware
@@ -118,7 +121,7 @@ class AuthViewSet(ViewSet):
 class PostViewSet(BaseViewSet):
     serializer_class = PostSerializer
     serializer_form_class = PostFormSerializer
-    queryset = Post.objects.prefetch_related('comments').all().order_by('-created_at')
+    queryset = Post.objects.select_related('user').all().order_by('-created_at')
     filterset_fields = ['user__id', 'publish']
     search_fields = ['title', ]
     logger_name = 'core'
@@ -148,6 +151,9 @@ class PostViewSet(BaseViewSet):
             )
         ],
     )
+    @method_decorator(cache_page(timeout=60 * 2, key_prefix='post'))
+    @method_decorator(vary_on_cookie)
+    @silk_profile(name='List blog post')
     def list(self, request, *args, **kwargs):
         context = {'status': status.HTTP_400_BAD_REQUEST}
         try:
@@ -287,9 +293,9 @@ class PostCommentViewSet(BaseViewSet):
     def list(self, request, *args, **kwargs):
         context = {'status': status.HTTP_400_BAD_REQUEST}
         try:
-            paginate = self.get_paginated_data(queryset=self.get_list(self.get_queryset()),
-                                               serializer_class=self.serializer_class)
-            context.update({"status": status.HTTP_200_OK, "message": "OK", "data": paginate})
+            context.update({"status": status.HTTP_200_OK, "message": "OK", "data": {
+                'results': self.serializer_class(self.get_list(self.get_queryset()), many=True).data
+            }})
         except Exception as ex:
             context.update({'status': status.HTTP_400_BAD_REQUEST, 'message': str(ex)})
             self.logger().error(
@@ -320,6 +326,52 @@ class PostCommentViewSet(BaseViewSet):
             context.update({'status': status.HTTP_400_BAD_REQUEST,
                             'message': 'Something went wrong while adding comment,Kindly try again'})
             self.logger().error(f'<{self.request.user}> error adding comment due to {format_exc(ex)}')
+        return Response(context, status=context['status'])
+
+    @swagger_auto_schema(
+        operation_description="Update a post comment",
+        operation_summary="Update a post comment",
+        request_body=CommentFormSerializer
+    )
+    @method_decorator(global_permission(), name="dispatch")
+    def update(self, request, *args, **kwargs):
+        context = {'status': status.HTTP_200_OK}
+        try:
+            data = self.get_data(request)
+            instance = self.get_object()
+            serializer = self.serializer_form_class(data=data, instance=instance)
+            if serializer.is_valid():
+                serializer.validated_data.update({'user': request.user})
+                instance = serializer.update(validated_data=serializer.validated_data, instance=instance)
+                context.update({'data': self.serializer_class(instance).data, 'message': 'Comment created'})
+            else:
+                context.update({
+                    'status': status.HTTP_400_BAD_REQUEST,
+                    'errors': error_message_formatter(serializer.errors)
+                })
+        except Exception as ex:
+            context.update({'status': status.HTTP_400_BAD_REQUEST,
+                            'message': 'Something went wrong while updating comment,Kindly try again'})
+            self.logger().error(f'<{self.request.user}> error updating comment due to {format_exc(ex)}')
+        return Response(context, status=context['status'])
+
+    @swagger_auto_schema(
+        operation_description="Delete blog post comment",
+        operation_summary="Delete blog post comment"
+    )
+    @method_decorator(global_permission(), name="dispatch")
+    def destroy(self, request, *args, **kwargs):
+        context = {'status': status.HTTP_204_NO_CONTENT}
+        try:
+            instance = self.get_object()
+            if instance.user.id != request.user.id:
+                context.update({'status': status.HTTP_403_FORBIDDEN,
+                                'message': 'You currently do not have access to this resource'})
+                return Response(context, status=context['status'])
+            instance.delete()
+        except Exception as ex:
+            context.update({'message': str(ex), 'status': status.HTTP_400_BAD_REQUEST})
+            self.logger().error(f'Something went wrong while deleting a blog post {kwargs} due to {format_exc(ex)}')
         return Response(context, status=context['status'])
 
     @action(detail=True, methods=['get'], description='Fetch comment replies')

@@ -34,10 +34,6 @@ class Post(models.Model):
             self.slug = slugify(self.title)
         return super().save(*args, **kwargs)
 
-    @property
-    def total_comments(self):
-        return self.comments.all().count()
-
 
 class Comment(models.Model):
     post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name="comments", null=True, blank=True)
@@ -49,7 +45,7 @@ class Comment(models.Model):
 
     def __str__(self):
         parent_id = self.parent_comment.id if self.parent_comment is not None else ''
-        name = self.post.title if self.post is not None else f'<Comment Reply> #{parent_id}'
+        name = f'{self.body}' if self.post is not None else f'<Comment Reply> #{parent_id}'
         return f"{name}"
 
     class Meta:
@@ -57,4 +53,4 @@ class Comment(models.Model):
 
     @property
     def total_replies(self):
-        return Comment.objects.filter(parent_comment=self).count()
+        return 0

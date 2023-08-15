@@ -14,11 +14,10 @@ class UserSerializer(serializers.ModelSerializer):
 class PostSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     image = serializers.SerializerMethodField('get_image')
-    total_comments = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Post
-        fields = ['id', 'user', 'title', 'slug', 'description', 'image', 'publish', 'total_comments']
+        fields = ['id', 'user', 'title', 'slug', 'description', 'image', 'publish']
 
     @staticmethod
     def get_image(obj):
@@ -32,7 +31,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = ['id', 'parent_comment_id', 'post_id', 'body', 'timestamp', 'total_replies']
+        fields = ['id', 'parent_comment_id', 'post_id', 'user_id', 'body', 'timestamp', 'total_replies']
 
 
 class UserRegisterFormSerializer(serializers.Serializer):
@@ -81,10 +80,10 @@ class PostFormSerializer(serializers.Serializer):
     publish = serializers.BooleanField(required=False)
 
     def create(self, validated_data):
+        validated_data.update({
+            'image': self.context["request"].FILES['image']
+        })
         instance = Post.objects.create(**validated_data)
-        if self.context["request"].FILES.get('image'):
-            instance.image = self.context["request"].FILES['image']
-            instance.save(update_fields=['image'])
         return instance
 
     def update(self, instance, validated_data):
@@ -106,7 +105,9 @@ class CommentFormSerializer(serializers.Serializer):
         return instance
 
     def update(self, instance, validated_data):
-        pass
+        _ = Comment.objects.filter(id=instance.id).update(**validated_data)
+        instance.refresh_from_db()
+        return instance
 
     def validate(self, attrs):
         if bool(attrs.get('post_id')) is False and bool(attrs.get('parent_comment_id')) is False:
