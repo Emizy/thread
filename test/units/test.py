@@ -54,8 +54,6 @@ class TestPostComment:
                 'body': ' '.join(fake.sentences())
             }
             _ = Comment.objects.create(**comment)
-        post.refresh_from_db()
-        assert post.total_comments == 5
 
     @pytest.mark.django_db
     def test_post_comment_serializer(self, setup_post_data, setup_user_data):

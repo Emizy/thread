@@ -263,11 +263,6 @@ class PostCommentViewSet(BaseViewSet):
     serializer_form_class = CommentFormSerializer
     filterset_fields = ['post__id']
     logger_name = 'core'
-    psq_rules = {
-        ('create',): [
-            Rule([IsAuthenticated])
-        ]
-    }
 
     def get_queryset(self):
         if self.request.GET.get('post__id') is None:
@@ -372,18 +367,4 @@ class PostCommentViewSet(BaseViewSet):
         except Exception as ex:
             context.update({'message': str(ex), 'status': status.HTTP_400_BAD_REQUEST})
             self.logger().error(f'Something went wrong while deleting a blog post {kwargs} due to {format_exc(ex)}')
-        return Response(context, status=context['status'])
-
-    @action(detail=True, methods=['get'], description='Fetch comment replies')
-    def replies(self, request, *args, **kwargs):
-        context = {'status': status.HTTP_200_OK}
-        try:
-            instance = self.get_object()
-            queryset = self.queryset.filter(parent_comment=instance)
-            context.update({'data': self.serializer_class(queryset, many=True).data})
-        except Exception as ex:
-            context.update({
-                'status': status.HTTP_400_BAD_REQUEST,
-                'message': 'Something went wrong while adding comment,Kindly try again'})
-            self.logger().error(f'error fetching comment relies due to {format_exc(ex)}')
         return Response(context, status=context['status'])

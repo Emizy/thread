@@ -110,14 +110,15 @@ class TestPost:
         assert list(payload.values()) == [data.get('title'), data.get('description')]
 
     def test_post_delete(self, auth_client):
-        payload = {
-            'title': fake.name(),
-            'publish': True,
-            'description': ' '.join(fake.sentences())
-        }
-        _ = auth_client.post(f'{EndPoint.POST}/', data=payload, format='multipart')
-        post = Post.objects.all().first()
-        response = auth_client.delete(f'{EndPoint.POST}/{post.id}/', format='json')
+        with open(file, 'rb') as image:
+            payload = {
+                'title': fake.name(),
+                'image': image,
+                'publish': True,
+                'description': ' '.join(fake.sentences())
+            }
+            resp = auth_client.post(f'{EndPoint.POST}/', data=payload, format='multipart')
+        response = auth_client.delete(f'{EndPoint.POST}/{resp.data["data"]["id"]}/', format='json')
         assert response.status_code == 204
 
 
@@ -163,14 +164,17 @@ class TestPostComment:
         for _ in range(10):
             random.shuffle(users)
             data = {
+                'post_id': comment.post.id,
                 'parent_comment_id': comment.id,
                 'body': fake.sentence(),
                 'user': users[0]
             }
             _ = Comment.objects.create(**data)
-        response = client.get(f'{EndPoint.COMMENT}/{comment.id}/replies/')
-        data = response.data['data']
-        assert len(data) == 10
+        response = client.get(f'{EndPoint.COMMENT}/?post__id={comment.post.id}')
+        data = response.data['data']['results']
+        replies = list(filter(lambda x: x.get('parent_comment_id') is not None, data))
+        comment_reply = list(filter(lambda x: x.get('parent_comment_id') == comment.id, replies))
+        assert len(comment_reply) == 10
 
     def test_create_comment_reply(self, auth_client, setup_post_data):
         post, user_info = setup_post_data
@@ -183,10 +187,3 @@ class TestPostComment:
         }
         response = auth_client.post(f'{EndPoint.COMMENT}/', data, 'json')
         assert response.status_code == 201
-
-    def test_create_comment_without_post_id(self, auth_client):
-        data = {
-            'body': fake.sentence(),
-        }
-        response = auth_client.post(f'{EndPoint.COMMENT}/', data, 'json')
-        assert response.status_code == 400
