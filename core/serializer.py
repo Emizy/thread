@@ -27,11 +27,10 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    total_replies = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Comment
-        fields = ['id', 'parent_comment_id', 'post_id', 'user_id', 'body', 'timestamp', 'total_replies']
+        fields = ['id', 'parent_comment_id', 'post_id', 'user_id', 'body', 'timestamp']
 
 
 class UserRegisterFormSerializer(serializers.Serializer):

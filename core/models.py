@@ -1,6 +1,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+
 from django.utils.text import slugify
+
 
 
 class User(AbstractUser):
@@ -51,6 +53,4 @@ class Comment(models.Model):
     class Meta:
         verbose_name_plural = 'Comments'
 
-    @property
-    def total_replies(self):
-        return 0
+
